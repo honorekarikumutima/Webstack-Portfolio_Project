@@ -1,60 +1,63 @@
-import React, {useState} from 'react';
-import './App.css';
+import "./App.css";
+import React, { useState } from "react";
 
-import Category from './components/Category';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import { getCategories } from "./fetcher";
+
+import ProductDetail from "./components/productDetail";
+import Basket from "./components/basket";
+import Checkout from "./components/checkout";
+import Category from "./components/category";
+import Home from "./components/home";
+import OrderConfirmation from "./components/orderconfirmation";
+import Layout from "./components/layout";
+import SearchResults from "./components/searchResults";
 
 function App() {
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState({
+        errorMessage: "",
+        data: [],
+    });
 
-  React.useEffect(() => {
-    fetch('http://localhost:3001/categories')
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        setCategories(data);
-      })
-  },[]);
+    React.useEffect(() => {
+        const fetchData = async () => {
+            const responseObject = await getCategories();
+            setCategories(responseObject);
+        };
+        fetchData();
+    }, []);
 
-  const handleCategoryClick = (id) => {
-    fetch('http://localhost:3001/products?catId=' + id)
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        setProducts(data);
-      })
-  }
-
-  const renderCategories = () => {
-    return categories.map((c) =>
-       <Category key={c.id} id={c.id} title={c.title} onCategoryClick={handleCategoryClick(c.id)} />
+    return (
+        <>
+            <BrowserRouter>
+                <Routes>
+                    <Route
+                        path="/"
+                        element={
+                            <Layout
+                                categories={categories}
+                            />
+                        }
+                    >
+                        <Route index element={<Home />} />
+                        <Route path="basket" element={<Basket />} />
+                        <Route path="checkout" element={<Checkout />} />
+                        <Route path="orderconfirmation" element={<OrderConfirmation />} />
+                        <Route path="search" element={<SearchResults /> } />
+                        <Route
+                            path="categories/:categoryId"
+                            element={<Category />}
+                        />
+                        <Route
+                            path="products/:productId"
+                            element={<ProductDetail />}
+                        />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
+        </>
     );
-  }
-
-  const renderProducts = () => {
-    return products.map(p => 
-      <div>{p.title}</div>
-    )
-  }
-  return (
-    <>
-    <header>My Store</header>
-    <section>
-      <nav>
-      {
-        categories && renderCategories()
-      }
-      </nav>
-      <article>
-        <h1>Products</h1>
-        {products && renderProducts}
-      </article>
-    </section>
-    <footer>
-      footer
-    </footer>
-    </>
-  );
 }
 
 export default App;
